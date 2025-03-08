@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto"
-import { Database } from "../database.js"
+import { Database } from "./database.js"
+import { construirRota } from "./utils/construtorDeRota.js"
 
-const arrayTasks= []
 const database = new Database
 export const routes = [
     {
         method:'GET',
-        url: '/tasks',
+        url: construirRota('/tasks'),
         handler:(req, res)=>{
             const tasks = database.metodoSelect('tasks')
 
@@ -15,7 +15,7 @@ export const routes = [
     },
     {
         method:'POST',
-        url: '/tasks',
+        url: construirRota('/tasks'),
         handler:(req, res)=>{
             const {title, description} = req.body
             const newTask = {
@@ -28,6 +28,32 @@ export const routes = [
             }
             database.metodoInsert('tasks',newTask)
             return res.writeHead(201).end()
+        }
+    },
+    {
+        method:'DELETE',
+        url: construirRota('/tasks/:id'),
+        handler: (req, res)=>{
+            const {id} = req.params
+            database.metodoDelete('tasks',id)
+            return res.writeHead(204).end()
+        }
+    },
+    {
+        method:'PUT',
+        url: construirRota('/tasks/:id'),
+        handler: (req, res)=>{
+            const {id} = req.params
+            const {title, description} = req.body
+
+            database.metodoUpdate('tasks',id, {
+                title,
+                description,
+                completed_at: null,
+                created_at,
+                updated_at: new Date().toISOString().split('T')[0],
+            })
+            return res.writeHead(204).end()
         }
     },
 ]
