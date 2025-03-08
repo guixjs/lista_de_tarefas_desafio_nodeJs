@@ -19,9 +19,17 @@ export class Database{
         fs.writeFile(caminhoDB,JSON.stringify(this.#database))
     }
 
-    metodoSelect(tabela){
+    metodoSelect(tabela,search){
         let data = this.#database[tabela] ?? []
-        return data
+
+        if(search){
+            data = data.filter(linha=>{
+                return Object.entries(search).some(([key,value])=>{
+                    return linha[key].toLowerCase().includes(value.toLowerCase())
+                })
+            })
+        }
+            return data
     }
 
     metodoInsert(tabela,data){
@@ -44,11 +52,21 @@ export class Database{
     }
     
     metodoUpdate(tabela, id, novosDados){
-        const indexEncontrado = this.#database[tabela].findIndex(linha=>linha.id === id)
+        const data = this.#database[tabela] ?? [];
+        const index = data.findIndex(item => item.id === id);
 
-        if(indexEncontrado> -1){
-            this.#database[tabela][indexEncontrado] = {id, ...novosDados}
-            this.#gravarNoArquivo
+        if (index === -1) {
+            return null; // Retorna null se a tarefa não for encontrada
         }
+    
+        // Mantém a data de criação original e só atualiza os campos recebidos
+        this.#database[tabela][index] = {
+            ...data[index], // Mantém os dados antigos
+            ...novosDados,  // Atualiza apenas os novos dados recebidos
+            updated_at: new Date().toISOString().split('T')[0] // Atualiza a data de modificação
+        };
+    
+        this.#gravarNoArquivo();
+        return this.#database[tabela][index]; // Retorna a tarefa atualizada
     }
 }
